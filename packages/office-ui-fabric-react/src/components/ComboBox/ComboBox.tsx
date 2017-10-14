@@ -50,9 +50,15 @@ export interface IComboBoxState {
   // that the options input matches (-1 if no input or match)
   currentPendingValueValidIndex: number;
 
+  // The previous index that was submitted
+  previousPendingValueValidIndex: number;
+
   // when taking input, this will store
   // the actual text that is being entered
   currentPendingValue: string;
+
+  // The previous value that was submitted
+  previousPendingValue: string;
 }
 
 enum SearchDirection {
@@ -131,7 +137,9 @@ export class ComboBox extends BaseComponent<IComboBoxProps, IComboBoxState> {
       suggestedDisplayValue: '',
       currentOptions: this.props.options,
       currentPendingValueValidIndex: -1,
-      currentPendingValue: ''
+      previousPendingValueValidIndex: -1,
+      currentPendingValue: '',
+      previousPendingValue: ''
     };
   }
 
@@ -711,13 +719,15 @@ export class ComboBox extends BaseComponent<IComboBoxProps, IComboBoxState> {
     } = this.props;
     let {
       currentPendingValue,
+      previousPendingValue,
       currentPendingValueValidIndex,
+      previousPendingValueValidIndex,
       currentOptions
     } = this.state;
 
     // If we allow freeform and we have a pending value, we
     // need to handle that
-    if (allowFreeform && currentPendingValue !== '') {
+    if (allowFreeform && currentPendingValue !== '' && currentPendingValue !== previousPendingValue) {
 
       // Check to see if the user typed an exact match
       if (currentPendingValueValidIndex >= 0) {
@@ -748,7 +758,7 @@ export class ComboBox extends BaseComponent<IComboBoxProps, IComboBoxState> {
           selectedIndex: newOptions.length - 1
         });
       }
-    } else if (currentPendingValueValidIndex >= 0) {
+    } else if (currentPendingValueValidIndex >= 0 && currentPendingValueValidIndex !== previousPendingValueValidIndex) {
       // Since we are not allowing freeform, we must have a matching
       // to be able to update state
       this._setSelectedIndex(currentPendingValueValidIndex);
@@ -1022,11 +1032,18 @@ export class ComboBox extends BaseComponent<IComboBoxProps, IComboBoxState> {
    * @param currentPendingValueValidIndex - new pending value index to set
    * @param suggestedDisplayValue - new suggest display value to set
    */
-  private _setPendingInfo(currentPendingValue: string, currentPendingValueValidIndex: number, suggestedDisplayValue: string) {
+  private _setPendingInfo(newCurrentPendingValue: string, newCurrentPendingValueValidIndex: number, suggestedDisplayValue: string) {
+    let {
+      currentPendingValue,
+      currentPendingValueValidIndex,
+    } = this.state;
+
     this.setState({
-      currentPendingValue: currentPendingValue,
-      currentPendingValueValidIndex: currentPendingValueValidIndex,
-      suggestedDisplayValue: suggestedDisplayValue
+      currentPendingValue: newCurrentPendingValue,
+      currentPendingValueValidIndex: newCurrentPendingValueValidIndex,
+      suggestedDisplayValue: suggestedDisplayValue,
+      previousPendingValue: currentPendingValue,
+      previousPendingValueValidIndex: currentPendingValueValidIndex
     });
   }
 
