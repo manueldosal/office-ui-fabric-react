@@ -623,7 +623,7 @@ export class ComboBox extends BaseComponent<IComboBoxProps, IComboBoxState> {
    */
   private _setSelectedIndex(index: number, searchDirection: SearchDirection = SearchDirection.none) {
     let { onChanged } = this.props;
-    let { selectedIndex, currentOptions } = this.state;
+    let { selectedIndex, currentOptions, previousPendingValueValidIndex } = this.state;
 
     // Find the next selectable index, if searchDirection is none
     // we will get our starting index back
@@ -640,8 +640,12 @@ export class ComboBox extends BaseComponent<IComboBoxProps, IComboBoxState> {
       });
 
       // Did the creator give us an onChanged callback?
-      if (onChanged) {
+      if (onChanged && index !== previousPendingValueValidIndex) {
         onChanged(option, index);
+        this.setState({
+          previousPendingValueValidIndex: index,
+          previousPendingValue: ''
+        });
       }
 
       // if we have a new selected index,
@@ -721,13 +725,12 @@ export class ComboBox extends BaseComponent<IComboBoxProps, IComboBoxState> {
       currentPendingValue,
       previousPendingValue,
       currentPendingValueValidIndex,
-      previousPendingValueValidIndex,
       currentOptions
     } = this.state;
 
     // If we allow freeform and we have a pending value, we
     // need to handle that
-    if (allowFreeform && currentPendingValue !== '' && currentPendingValue !== previousPendingValue) {
+    if (allowFreeform && currentPendingValue !== '') {
 
       // Check to see if the user typed an exact match
       if (currentPendingValueValidIndex >= 0) {
@@ -746,8 +749,13 @@ export class ComboBox extends BaseComponent<IComboBoxProps, IComboBoxState> {
         }
       }
 
-      if (onChanged) {
+      if (onChanged && currentPendingValue !== previousPendingValue) {
         onChanged(undefined, undefined, currentPendingValue);
+        this.setState({
+          previousPendingValueValidIndex: -1,
+          previousPendingValue: currentPendingValue
+        });
+
       } else {
         // If we are not controlled, create a new option
         let newOption: IComboBoxOption = { key: currentPendingValue, text: currentPendingValue };
@@ -758,7 +766,7 @@ export class ComboBox extends BaseComponent<IComboBoxProps, IComboBoxState> {
           selectedIndex: newOptions.length - 1
         });
       }
-    } else if (currentPendingValueValidIndex >= 0 && currentPendingValueValidIndex !== previousPendingValueValidIndex) {
+    } else if (currentPendingValueValidIndex >= 0) {
       // Since we are not allowing freeform, we must have a matching
       // to be able to update state
       this._setSelectedIndex(currentPendingValueValidIndex);
@@ -1033,17 +1041,15 @@ export class ComboBox extends BaseComponent<IComboBoxProps, IComboBoxState> {
    * @param suggestedDisplayValue - new suggest display value to set
    */
   private _setPendingInfo(newCurrentPendingValue: string, newCurrentPendingValueValidIndex: number, suggestedDisplayValue: string) {
-    let {
-      currentPendingValue,
-      currentPendingValueValidIndex,
-    } = this.state;
+    // let {
+    //   currentPendingValue,
+    //   currentPendingValueValidIndex,
+    // } = this.state;
 
     this.setState({
       currentPendingValue: newCurrentPendingValue,
       currentPendingValueValidIndex: newCurrentPendingValueValidIndex,
-      suggestedDisplayValue: suggestedDisplayValue,
-      previousPendingValue: currentPendingValue,
-      previousPendingValueValidIndex: currentPendingValueValidIndex
+      suggestedDisplayValue: suggestedDisplayValue
     });
   }
 
